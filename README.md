@@ -137,6 +137,34 @@ Add to your VS Code `settings.json` (or `.vscode/mcp.json`):
 }
 ```
 
+#### LM Studio
+
+[LM Studio](https://lmstudio.ai/) (≥ 0.3.17) can act as an MCP host, letting locally-running models call bib-validate tools.
+
+1. Open **LM Studio** and switch to the **Program** tab in the right-hand sidebar.
+2. Click **Install → Edit mcp.json**.
+3. Add the `bib-validate` entry inside the `mcpServers` object:
+
+```json
+{
+  "mcpServers": {
+    "bib-validate": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"],
+      "cwd": "/absolute/path/to/bib-validate",
+      "env": {
+        "IEEE_API_KEY": "your_ieee_api_key_here"
+      }
+    }
+  }
+}
+```
+
+4. Load a model that supports **tool/function calling** (e.g. a recent Llama, Qwen, or Mistral variant).
+5. The bib-validate tools will appear in the model's tool list automatically.
+
+> **Tip:** Some MCP servers designed for cloud models can consume many tokens. Local models with smaller context windows may hit context limits during the `validate_paper` workflow. If this happens, call the individual tools (`fetch_arxiv_metadata`, `compare_metadata`, etc.) one at a time instead.
+
 > **Note:** The MCP server reads `IEEE_API_KEY` from the environment (not the `VITE_`-prefixed variable used by the web app). Set it in the `env` block above or export it in your shell before starting the server.
 
 ## Project Structure
