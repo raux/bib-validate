@@ -12,10 +12,11 @@ interface IeeeArticle {
 /**
  * Search IEEE Xplore by title and return the top result's metadata.
  * Requires IEEE_API_KEY environment variable (Vite: VITE_IEEE_API_KEY).
+ * An explicit apiKey parameter takes precedence over env vars.
  */
-export async function fetchIeeeMetadata(title: string): Promise<PaperMetadata> {
-  const apiKey = import.meta.env.VITE_IEEE_API_KEY as string | undefined;
-  if (!apiKey) {
+export async function fetchIeeeMetadata(title: string, apiKey?: string): Promise<PaperMetadata> {
+  const key = apiKey ?? (import.meta.env.VITE_IEEE_API_KEY as string | undefined);
+  if (!key) {
     throw new Error('IEEE API key not configured (VITE_IEEE_API_KEY)');
   }
 
@@ -23,7 +24,7 @@ export async function fetchIeeeMetadata(title: string): Promise<PaperMetadata> {
     params: {
       querytext: title,
       max_records: 1,
-      apikey: apiKey,
+      apikey: key,
     },
   });
 

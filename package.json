@@ -9,16 +9,20 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node scripts/test.mjs",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "mcp": "tsx src/mcp/server.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.6",
     "fast-xml-parser": "^5.5.6",
     "fuse.js": "^7.1.0",
     "js-levenshtein": "^1.1.6",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "tsx": "^4.21.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
