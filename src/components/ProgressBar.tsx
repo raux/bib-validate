@@ -65,6 +65,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ step, sources }) => {
             return (
               <span
                 key={key}
+                aria-label={`${label}: ${status}`}
                 className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${sourceStatusClass(status)}`}
               >
                 <span aria-hidden="true">{sourceStatusIcon(status)}</span>

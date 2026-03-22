@@ -28,6 +28,7 @@ export const SourceCard: React.FC<SourceCardProps> = ({ label, result }) => {
       {result.status === 'loading' && (
         <div className="flex flex-col gap-2">
           <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+            {/* Indeterminate loading indicator – width is purely decorative */}
             <div className="h-full bg-yellow-400 rounded-full animate-pulse" style={{ width: '60%' }} />
           </div>
           <p className="text-xs text-gray-500">Retrieving metadata…</p>
