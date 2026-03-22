@@ -136,6 +136,9 @@ export function useCoordinator() {
       dispatch({ type: 'SET_DISCREPANCIES', payload: discrepancies });
       dispatch({ type: 'SET_STEP', payload: 5 });
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      console.error('[useCoordinator] unexpected error:', msg);
+      dispatch({ type: 'SOURCE_ERROR', source: 'arxiv', error: msg });
       dispatch({ type: 'SET_STEP', payload: 5 });
     }
   }, []);
