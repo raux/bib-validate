@@ -66,74 +66,78 @@ export function useCoordinator() {
     dispatch({ type: 'RESET' });
     dispatch({ type: 'SET_INPUT', payload: input });
 
-    // Step 1: Resolve arXiv ID or DOI
-    dispatch({ type: 'SET_STEP', payload: 1 });
-
-    const arxivId = extractArxivId(input);
-    const queryIdentifier = arxivId ?? normalizeDoi(input);
-
-    // Step 2: Fetch arXiv ground truth
-    dispatch({ type: 'SET_STEP', payload: 2 });
-    dispatch({ type: 'SOURCE_LOADING', source: 'arxiv' });
-
-    let arxivData;
     try {
-      arxivData = await fetchArxivMetadata(queryIdentifier);
-      dispatch({ type: 'SOURCE_SUCCESS', source: 'arxiv', data: arxivData });
+      // Step 1: Resolve arXiv ID or DOI
+      dispatch({ type: 'SET_STEP', payload: 1 });
+
+      const arxivId = extractArxivId(input);
+      const queryIdentifier = arxivId ?? normalizeDoi(input);
+
+      // Step 2: Fetch arXiv ground truth
+      dispatch({ type: 'SET_STEP', payload: 2 });
+      dispatch({ type: 'SOURCE_LOADING', source: 'arxiv' });
+
+      let arxivData;
+      try {
+        arxivData = await fetchArxivMetadata(queryIdentifier);
+        dispatch({ type: 'SOURCE_SUCCESS', source: 'arxiv', data: arxivData });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Source Unavailable';
+        dispatch({ type: 'SOURCE_ERROR', source: 'arxiv', error: msg });
+        dispatch({ type: 'SET_STEP', payload: 5 });
+        return;
+      }
+
+      // Step 3: Cross-reference DBLP and IEEE in parallel
+      dispatch({ type: 'SET_STEP', payload: 3 });
+      dispatch({ type: 'SOURCE_LOADING', source: 'dblp' });
+      dispatch({ type: 'SOURCE_LOADING', source: 'scholar' });
+      dispatch({ type: 'SOURCE_LOADING', source: 'ieee' });
+
+      const [dblpResult, ieeeResult] = await Promise.allSettled([
+        fetchDblpMetadata(arxivData.title),
+        fetchIeeeMetadata(arxivData.title),
+      ]);
+
+      if (dblpResult.status === 'fulfilled') {
+        dispatch({ type: 'SOURCE_SUCCESS', source: 'dblp', data: dblpResult.value });
+      } else {
+        dispatch({
+          type: 'SOURCE_ERROR',
+          source: 'dblp',
+          error: dblpResult.reason instanceof Error ? dblpResult.reason.message : 'Source Unavailable',
+        });
+      }
+
+      if (ieeeResult.status === 'fulfilled') {
+        dispatch({ type: 'SOURCE_SUCCESS', source: 'ieee', data: ieeeResult.value });
+      } else {
+        dispatch({
+          type: 'SOURCE_ERROR',
+          source: 'ieee',
+          error: ieeeResult.reason instanceof Error ? ieeeResult.reason.message : 'Source Unavailable',
+        });
+      }
+
+      // Scholar (Google Scholar) not available without API key – mark unavailable
+      dispatch({
+        type: 'SOURCE_ERROR',
+        source: 'scholar',
+        error: 'Google Scholar requires a SERP API key (VITE_SERP_API_KEY)',
+      });
+
+      // Step 4: Validate and diff
+      dispatch({ type: 'SET_STEP', payload: 4 });
+      const successfulSources = [dblpResult, ieeeResult]
+        .filter((r) => r.status === 'fulfilled')
+        .map((r) => (r as PromiseFulfilledResult<typeof arxivData>).value);
+
+      const discrepancies = aggregateDiscrepancies(arxivData, successfulSources);
+      dispatch({ type: 'SET_DISCREPANCIES', payload: discrepancies });
+      dispatch({ type: 'SET_STEP', payload: 5 });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Source Unavailable';
-      dispatch({ type: 'SOURCE_ERROR', source: 'arxiv', error: msg });
-      dispatch({ type: 'SET_STEP', payload: 0 });
-      return;
+      dispatch({ type: 'SET_STEP', payload: 5 });
     }
-
-    // Step 3: Cross-reference DBLP and IEEE in parallel
-    dispatch({ type: 'SET_STEP', payload: 3 });
-    dispatch({ type: 'SOURCE_LOADING', source: 'dblp' });
-    dispatch({ type: 'SOURCE_LOADING', source: 'scholar' });
-    dispatch({ type: 'SOURCE_LOADING', source: 'ieee' });
-
-    const [dblpResult, ieeeResult] = await Promise.allSettled([
-      fetchDblpMetadata(arxivData.title),
-      fetchIeeeMetadata(arxivData.title),
-    ]);
-
-    if (dblpResult.status === 'fulfilled') {
-      dispatch({ type: 'SOURCE_SUCCESS', source: 'dblp', data: dblpResult.value });
-    } else {
-      dispatch({
-        type: 'SOURCE_ERROR',
-        source: 'dblp',
-        error: dblpResult.reason instanceof Error ? dblpResult.reason.message : 'Source Unavailable',
-      });
-    }
-
-    if (ieeeResult.status === 'fulfilled') {
-      dispatch({ type: 'SOURCE_SUCCESS', source: 'ieee', data: ieeeResult.value });
-    } else {
-      dispatch({
-        type: 'SOURCE_ERROR',
-        source: 'ieee',
-        error: ieeeResult.reason instanceof Error ? ieeeResult.reason.message : 'Source Unavailable',
-      });
-    }
-
-    // Scholar (Google Scholar) not available without API key – mark unavailable
-    dispatch({
-      type: 'SOURCE_ERROR',
-      source: 'scholar',
-      error: 'Google Scholar requires a SERP API key (VITE_SERP_API_KEY)',
-    });
-
-    // Step 4: Validate and diff
-    dispatch({ type: 'SET_STEP', payload: 4 });
-    const successfulSources = [dblpResult, ieeeResult]
-      .filter((r) => r.status === 'fulfilled')
-      .map((r) => (r as PromiseFulfilledResult<typeof arxivData>).value);
-
-    const discrepancies = aggregateDiscrepancies(arxivData, successfulSources);
-    dispatch({ type: 'SET_DISCREPANCIES', payload: discrepancies });
-    dispatch({ type: 'SET_STEP', payload: 5 });
   }, []);
 
   return { state, dispatch, run };
