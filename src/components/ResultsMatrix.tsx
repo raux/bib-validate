@@ -24,14 +24,22 @@ export const ResultsMatrix: React.FC<ResultsMatrixProps> = ({ state }) => {
 
   if (step === 0) return null;
 
+  const activeSourceKeys = (Object.keys(sources) as Array<keyof AppState['sources']>).filter(
+    (key) => sources[key].status !== 'idle',
+  );
+
   return (
     <div className="w-full max-w-4xl mx-auto mt-8 space-y-6">
-      <h2 className="text-xl font-bold text-gray-800">Metadata Sources</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {(Object.keys(sources) as Array<keyof AppState['sources']>).map((key) => (
-          <SourceCard key={key} label={SOURCE_LABELS[key]} result={sources[key]} />
-        ))}
-      </div>
+      {activeSourceKeys.length > 0 && (
+        <>
+          <h2 className="text-xl font-bold text-gray-800">Metadata Sources</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {activeSourceKeys.map((key) => (
+              <SourceCard key={key} label={SOURCE_LABELS[key]} result={sources[key]} />
+            ))}
+          </div>
+        </>
+      )}
 
       {step === 5 && (
         <div className="mt-6">

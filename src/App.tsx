@@ -21,7 +21,7 @@ function AppContent() {
         </header>
 
         <InputForm onSubmit={run} isLoading={isLoading} />
-        <ProgressBar step={state.step} />
+        <ProgressBar step={state.step} sources={state.sources} />
         <ResultsMatrix state={state} />
       </div>
     </div>
