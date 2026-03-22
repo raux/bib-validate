@@ -4,14 +4,14 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 
 import { fetchArxivMetadata } from '../agents/arxivAgent.js';
-import { fetchDblpMetadata } from '../agents/dblpAgent.js';
+import { fetchDblpMetadata, searchDblp } from '../agents/dblpAgent.js';
 import { fetchIeeeMetadata } from '../agents/scholarAgent.js';
 import {
   compareMetadata,
   aggregateDiscrepancies,
 } from '../agents/validationAgent.js';
 import { normalizeDoi, extractArxivId, detectInputType } from '../utils/doi.js';
-import type { PaperMetadata, Discrepancy } from '../types/index.js';
+import type { PaperMetadata, Discrepancy, DblpSearchResult } from '../types/index.js';
 
 const server = new McpServer({
   name: 'bib-validate',
@@ -94,6 +94,26 @@ server.tool(
       const metadata = await fetchDblpMetadata(title);
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(metadata, null, 2) }],
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
+    }
+  },
+);
+
+server.tool(
+  'search_dblp',
+  'Search DBLP for one or more queries and return full result metadata (title, authors, year, venue, pages, doi, url, etc.) for each query. Ported from https://github.com/raux/dblp-api.',
+  { queries: z.array(z.string()).describe('List of search queries (paper titles, keywords, etc.)') },
+  async ({ queries }) => {
+    try {
+      const results: Array<DblpSearchResult | null> = await searchDblp(queries);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(results, null, 2) }],
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);

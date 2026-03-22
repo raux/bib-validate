@@ -5,6 +5,24 @@ export interface PaperMetadata {
   source: string;
 }
 
+/**
+ * Extended DBLP search result containing all metadata fields returned by the
+ * DBLP API (modelled after https://github.com/raux/dblp-api).
+ */
+export interface DblpSearchResult {
+  title: string;
+  authors: string[];
+  year: string;
+  venue: string;
+  pages: string;
+  type: string;
+  access: string;
+  key: string;
+  doi: string;
+  ee: string;
+  url: string;
+}
+
 export type SourceStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface SourceResult {
