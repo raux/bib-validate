@@ -32,6 +32,7 @@ describe('MCP Server', () => {
       'fetch_dblp_metadata',
       'fetch_ieee_metadata',
       'normalize_doi',
+      'search_dblp',
       'validate_paper',
     ]);
   });
