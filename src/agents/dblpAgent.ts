@@ -79,7 +79,7 @@ export async function searchDblp(
       key: info.key ?? '',
       doi: info.doi ?? '',
       ee: info.ee ?? '',
-      url: info.url ? `https://dblp.org/rec/${info.key ?? ''}` : '',
+      url: info.url ?? '',
     });
   }
 
